@@ -1,5 +1,6 @@
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/lending_club_sample.csv
 
 data/processed/*
 !data/processed/.gitkeep
