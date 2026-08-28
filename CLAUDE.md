@@ -19,3 +19,9 @@ don't wait for me to catch it:
 - Never reference personal schedule/roadmap terms (e.g. "Day N", "Week
   N") in commit messages, code, comments, docstrings, or filenames.
   Describe only what the change or code actually does.
+- Never run git commit or git push without a separate, explicit
+  confirmation from me after being shown the diff - even if a single
+  message appears to authorize both showing the diff and committing/
+  pushing in one sequence. Treat "show me the diff" and "commit/push" as
+  two separate steps requiring separate confirmation, every time,
+  regardless of how the request is phrased.
