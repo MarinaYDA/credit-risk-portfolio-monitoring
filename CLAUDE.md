@@ -16,3 +16,6 @@ don't wait for me to catch it:
 - Before calling a day "done," self-check: would this run correctly right
   after a stranger clones this repo on their own machine? If not, fix it
   before marking the day complete, don't wait for me to notice.
+- Never reference personal schedule/roadmap terms (e.g. "Day N", "Week
+  N") in commit messages, code, comments, docstrings, or filenames.
+  Describe only what the change or code actually does.
