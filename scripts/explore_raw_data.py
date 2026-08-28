@@ -28,6 +28,12 @@ RAW_PATH = (
 )
 NROWS = 200_000
 
+# Selected using LendingClub's official data dictionary (which defines
+# what each column in the dataset means), cross-referenced against the
+# business question in docs/charter.md. Data dictionary source:
+# https://www.kaggle.com/datasets/wordsforthewise/lending-club (Data tab)
+# or, if not available there:
+# https://www.kaggle.com/datasets/jonchan2003/lending-club-data-dictionary
 KEY_NUMERIC_COLUMNS = [
     "loan_amnt",
     "int_rate",
