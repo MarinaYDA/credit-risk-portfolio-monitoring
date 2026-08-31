@@ -15,6 +15,10 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_PATH = REPO_ROOT / "data" / "raw" / "lending_club_sample.csv"
+MONTHLY_PERFORMANCE_PATH = (
+    REPO_ROOT / "data" / "processed" / "loan_monthly_performance.csv"
+)
+RANDOM_SEED = 42
 
 TERMINAL_STATES = {"default", "paid_off"}
 
@@ -100,18 +104,81 @@ def simulate_path(
     return path
 
 
+def parse_term_months(term: str) -> int:
+    """Parse a term string like " 36 months" into an integer month count."""
+    return int(term.strip().split()[0])
+
+
+def build_monthly_performance(
+    sample: pd.DataFrame,
+    rng: np.random.Generator,
+) -> pd.DataFrame:
+    """Simulate a monthly delinquency panel for every loan in sample.
+
+    Draws from a single shared rng across all loans, consumed in the
+    same row order as sample, so the full run is only reproducible as a
+    whole (with a fixed rng seed and a fixed row order), not loan by
+    loan in isolation.
+    """
+    vintage_months = pd.to_datetime(
+        sample["issue_d"], format="%b-%Y"
+    ).dt.to_period("M")
+
+    records = []
+    for loan_id, grade, term, vintage_month in zip(
+        sample["id"], sample["grade"], sample["term"], vintage_months
+    ):
+        term_months = parse_term_months(term)
+        path = simulate_path(grade, term_months, rng)
+        for months_on_book, state in enumerate(path, start=1):
+            records.append(
+                {
+                    "loan_id": loan_id,
+                    "vintage_month": vintage_month,
+                    "months_on_book": months_on_book,
+                    "snapshot_month": vintage_month + (months_on_book - 1),
+                    "delinquency_state": state,
+                }
+            )
+
+    return pd.DataFrame.from_records(records)
+
+
 if __name__ == "__main__":
-    df = pd.read_csv(SAMPLE_PATH)
-    loan = df.iloc[0]
+    sample = pd.read_csv(SAMPLE_PATH)
+    rng = np.random.default_rng(RANDOM_SEED)
 
-    term_months = int(loan["term"].strip().split()[0])
-    rng = np.random.default_rng(42)
-    path = simulate_path(loan["grade"], term_months, rng)
+    monthly = build_monthly_performance(sample, rng)
 
-    print(f"Loan id: {loan['id']}")
-    print(f"Grade: {loan['grade']}")
-    print(f"Term: {term_months} months")
-    print()
-    print("Simulated monthly path:")
-    for month, state in enumerate(path, start=1):
-        print(f"  month {month:>2}: {state}")
+    print("=== monthly performance shape ===")
+    print(monthly.shape)
+
+    monthly.to_csv(MONTHLY_PERFORMANCE_PATH, index=False)
+    print(f"\nSaved {len(monthly):,} rows to {MONTHLY_PERFORMANCE_PATH}")
+
+    # Verify grade A's default share is meaningfully lower than grade G's,
+    # rather than assuming the grade-calibrated hazard produced the
+    # expected risk ordering.
+    final_state = monthly.groupby("loan_id")["delinquency_state"].last()
+    outcomes = final_state.to_frame("final_state").merge(
+        sample[["id", "grade"]].rename(columns={"id": "loan_id"}),
+        on="loan_id",
+    )
+    outcomes["reached_default"] = outcomes["final_state"] == "default"
+    default_rate_by_grade = (
+        outcomes.groupby("grade")["reached_default"].mean().sort_index()
+    )
+
+    print("\n=== default rate by grade ===")
+    print(default_rate_by_grade)
+
+    rate_a = default_rate_by_grade["A"]
+    rate_g = default_rate_by_grade["G"]
+    print(f"\nGrade A default rate: {rate_a:.2%}")
+    print(f"Grade G default rate: {rate_g:.2%}")
+
+    assert rate_a < rate_g, (
+        "Grade A default rate is not lower than grade G — "
+        "investigate before proceeding."
+    )
+    print("Check passed: grade A default rate is lower than grade G.")
