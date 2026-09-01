@@ -5,3 +5,8 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/loan_monthly_performance.csv
+
+__pycache__/
+*.pyc
+
+notebooks/
