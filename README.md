@@ -10,6 +10,30 @@
    Kaggle: https://www.kaggle.com/datasets/wordsforthewise/lending-club
 3. Place the downloaded file at `data/raw/accepted_2007_to_2018Q4.csv`.
 
+## Data & Methodology
+
+**Data source:** Loan-level attributes (amount, rate, grade, purpose,
+income, DTI, FICO range, issue date) come from the real, publicly issued
+LendingClub dataset (see [Setup](#setup) for the download source).
+Monthly delinquency status is not present in the raw data — it is
+simulated via a grade-calibrated Markov chain, disclosed as a deliberate
+design choice in [docs/charter.md](docs/charter.md) and implemented in
+[scripts/generate_loan_performance.py](scripts/generate_loan_performance.py).
+
+**Sampling design:** Analysis runs on a reproducible, grade-balanced
+sample of 3,500 loans (500 per grade, A through G, fixed random seed 42),
+built from the full ~2.26M-row raw dataset by
+[scripts/build_lending_club_sample.py](scripts/build_lending_club_sample.py).
+
+**Vintage curve analysis:** Tracks cumulative default rate by loan age
+for each origination cohort, using a fixed cohort-size denominator so the
+rate is monotonically non-decreasing with age. See
+[sql/01_vintage_analysis.sql](sql/01_vintage_analysis.sql).
+
+**Roll rate analysis:** Tracks month-over-month transition rates between
+delinquency states (e.g. 30 DPD to 60 DPD), normalized within each
+starting state. See [sql/02_roll_rate.sql](sql/02_roll_rate.sql).
+
 ## AI-Augmented Development
 
 <!-- TODO: move this section to the end of the file, after the
