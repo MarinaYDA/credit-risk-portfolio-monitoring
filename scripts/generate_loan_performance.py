@@ -15,10 +15,8 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_PATH = REPO_ROOT / "data" / "raw" / "lending_club_sample.csv"
-MONTHLY_PERFORMANCE_PATH = (
-    REPO_ROOT / "data" / "processed" / "loan_monthly_performance.csv"
-)
-RANDOM_SEED = 42
+MONTHLY_PATH = REPO_ROOT / "data" / "processed" / "loan_monthly_performance.csv"
+RANDOM_SEED = 42  # named to match numpy's default_rng(seed=...); see RANDOM_STATE in build_lending_club_sample.py
 
 TERMINAL_STATES = {"default", "paid_off"}
 
@@ -104,6 +102,8 @@ def simulate_path(
     return path
 
 
+# If the term string format ever changes, also update the equivalent
+# regexp_extract parsing in verify_sample_and_performance.py.
 def parse_term_months(term: str) -> int:
     """Parse a term string like " 36 months" into an integer month count."""
     return int(term.strip().split()[0])
@@ -126,7 +126,7 @@ def build_monthly_performance(
 
     records = []
     for loan_id, grade, term, vintage_month in zip(
-        sample["id"], sample["grade"], sample["term"], vintage_months
+        sample["loan_id"], sample["grade"], sample["term"], vintage_months
     ):
         term_months = parse_term_months(term)
         path = simulate_path(grade, term_months, rng)
@@ -153,15 +153,15 @@ if __name__ == "__main__":
     print("=== monthly performance shape ===")
     print(monthly.shape)
 
-    monthly.to_csv(MONTHLY_PERFORMANCE_PATH, index=False)
-    print(f"\nSaved {len(monthly):,} rows to {MONTHLY_PERFORMANCE_PATH}")
+    monthly.to_csv(MONTHLY_PATH, index=False)
+    print(f"\nSaved {len(monthly):,} rows to {MONTHLY_PATH}")
 
     # Verify grade A's default share is meaningfully lower than grade G's,
     # rather than assuming the grade-calibrated hazard produced the
     # expected risk ordering.
     final_state = monthly.groupby("loan_id")["delinquency_state"].last()
     outcomes = final_state.to_frame("final_state").merge(
-        sample[["id", "grade"]].rename(columns={"id": "loan_id"}),
+        sample[["loan_id", "grade"]],
         on="loan_id",
     )
     outcomes["reached_default"] = outcomes["final_state"] == "default"

@@ -33,7 +33,7 @@ COLUMNS = [
 ]
 
 PER_GRADE_SAMPLE_SIZE = 500
-RANDOM_STATE = 42
+RANDOM_STATE = 42  # named to match pandas' random_state= parameter; see RANDOM_SEED in generate_loan_performance.py
 CHUNK_SIZE = 250_000
 
 
@@ -50,11 +50,12 @@ def build_sample() -> pd.DataFrame:
         ignore_index=True,
     )
 
-    return (
+    sample = (
         df.groupby("grade", group_keys=False)
         .sample(n=PER_GRADE_SAMPLE_SIZE, random_state=RANDOM_STATE)
         .reset_index(drop=True)
     )
+    return sample.rename(columns={"id": "loan_id"})
 
 
 def main() -> None:
@@ -74,8 +75,8 @@ def main() -> None:
     print("\n=== Per-grade value_counts() of final sample ===")
     print(sample["grade"].value_counts().sort_index())
 
-    print("\n=== id uniqueness check ===")
-    print("df['id'].is_unique:", sample["id"].is_unique)
+    print("\n=== loan_id uniqueness check ===")
+    print("df['loan_id'].is_unique:", sample["loan_id"].is_unique)
 
     if args.no_save:
         print("\n--no-save passed: CSV not written.")

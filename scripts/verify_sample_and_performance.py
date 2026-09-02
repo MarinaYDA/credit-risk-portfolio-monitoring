@@ -83,7 +83,7 @@ def main() -> None:
                 COUNT(DISTINCT m.loan_id) AS loan_count,
                 ROUND(COUNT(*) * 1.0 / COUNT(DISTINCT m.loan_id), 2) AS avg_months_per_loan
             FROM '{MONTHLY_PATH}' m
-            JOIN '{SAMPLE_PATH}' s ON m.loan_id = s.id
+            JOIN '{SAMPLE_PATH}' s ON m.loan_id = s.loan_id
             GROUP BY s.grade
             ORDER BY s.grade
             """
@@ -110,8 +110,10 @@ def main() -> None:
     print(
         con.sql(
             f"""
+            -- Term parsing here must be kept in sync with
+            -- parse_term_months() in generate_loan_performance.py.
             WITH term_parsed AS (
-                SELECT id, grade,
+                SELECT loan_id, grade,
                        CAST(regexp_extract(term, '(\\d+)', 1) AS INTEGER) AS term_months
                 FROM '{SAMPLE_PATH}'
             ),
@@ -126,7 +128,7 @@ def main() -> None:
                 ROUND(AVG(u.months_on_book), 2) AS avg_months_used,
                 ROUND(AVG(u.months_on_book) * 100.0 / AVG(t.term_months), 1) AS pct_term_consumed
             FROM term_parsed t
-            JOIN months_used u ON t.id = u.loan_id
+            JOIN months_used u ON t.loan_id = u.loan_id
             GROUP BY t.grade
             ORDER BY t.grade
             """
