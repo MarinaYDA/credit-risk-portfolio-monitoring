@@ -33,9 +33,9 @@ signals.
 2. **Roll rate analysis** — month-over-month transition rates between
    delinquency buckets, using the simulated delinquency panel.
 3. **Logistic regression PD model** — probability of default estimated
-   from loan-level attributes (grade, purpose, income, DTI, FICO range),
-   used to validate that simulated delinquency behavior tracks expected
-   risk ordering.
+   from loan-level attributes (grade, purpose, income, DTI, FICO range,
+   home ownership, employment length), used to validate that simulated
+   delinquency behavior tracks expected risk ordering.
 
 ## Success Metrics (3)
 1. **Default/delinquency rate trend** — monthly (simulated) 30/60/90+ DPD
