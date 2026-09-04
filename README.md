@@ -24,6 +24,11 @@ design choice in [docs/charter.md](docs/charter.md) and implemented in
 sample of 3,500 loans (500 per grade, A through G, fixed random seed 42),
 built from the full ~2.26M-row raw dataset by
 [scripts/build_lending_club_sample.py](scripts/build_lending_club_sample.py).
+Note: `installment` and `fico_range_high` were both examined during
+initial exploration in
+[scripts/explore_raw_data.py](scripts/explore_raw_data.py) but are not
+present in the sample's final column set — no rationale for that
+exclusion is on record.
 
 **Vintage curve analysis:** Tracks cumulative default rate by loan age
 for each origination cohort, using a fixed cohort-size denominator so the
