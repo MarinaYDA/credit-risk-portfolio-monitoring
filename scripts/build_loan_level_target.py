@@ -43,6 +43,10 @@ def build_target(monthly: pd.DataFrame) -> pd.DataFrame:
 if __name__ == "__main__":
     sample = pd.read_csv(SAMPLE_PATH)
     monthly = pd.read_csv(MONTHLY_PATH)
+    # groupby().last() below only returns the true final state if rows
+    # are already in order - pandas doesn't sort them for you, and
+    # relying on incidental CSV row order is an unvalidated assumption.
+    monthly = monthly.sort_values(["loan_id", "months_on_book"])
 
     target = build_target(monthly)
 
@@ -55,9 +59,6 @@ if __name__ == "__main__":
 
     print("=== loan_level_target shape ===")
     print(result.shape)
-
-    result.to_csv(TARGET_PATH, index=False)
-    print(f"\nSaved {len(result):,} rows to {TARGET_PATH}")
 
     # --- Verification 1: exactly 3,500 rows, no duplicates from the join ---
     print("\n=== Verification 1: row count ===")
@@ -109,3 +110,8 @@ if __name__ == "__main__":
         "loan_id sets differ between target and sample"
     )
     print("PASS: loan_id sets match exactly.")
+
+    # Written only after every verification above has passed - a failed
+    # assert must never leave a written CSV on disk.
+    result.to_csv(TARGET_PATH, index=False)
+    print(f"\nSaved {len(result):,} rows to {TARGET_PATH}")
