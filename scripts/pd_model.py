@@ -26,21 +26,29 @@ any adjacent grade pair) show a small residual inversion once the model
 conditions on int_rate and other continuous features - flagged here for
 full interpretation when model coefficients are examined in detail, not
 treated as a defect.
+
+ROC curve, KS statistic, and confusion matrix are all computed on the
+test set only (874 rows), matching AUC's convention - these measure
+classifier performance and should be out-of-sample, unlike the
+full-sample grade-ordering check above, which is a different,
+population-level question.
 """
 
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FEATURES_PATH = REPO_ROOT / "data" / "processed" / "model_features.csv"
+ROC_CURVE_PATH = REPO_ROOT / "docs" / "img" / "roc_curve.png"
 
 TARGET = "defaulted_12m"
 NUM_FEATURES = [
@@ -153,6 +161,49 @@ if __name__ == "__main__":
 
     print(f"\nTrain rows: {len(X_train):,}  Test rows: {len(X_test):,}")
     print(f"Test set AUC: {auc:.4f}")
+
+    # ROC curve, KS statistic, and the KS-maximizing threshold - all on
+    # the test set, same as AUC above.
+    fpr, tpr, thresholds = roc_curve(y_test, test_proba)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot(fpr, tpr, label=f"ROC curve (AUC = {auc:.4f})")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Random classifier")
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("ROC Curve - PD Model (test set)")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    ROC_CURVE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(ROC_CURVE_PATH, dpi=130)
+    plt.close(fig)
+    print(f"\nSaved ROC curve to {ROC_CURVE_PATH}")
+
+    # KS statistic: max distance between TPR and FPR across all
+    # thresholds - the standard credit-scoring definition (the point of
+    # maximum separation between the defaulter and non-defaulter score
+    # distributions).
+    ks_index = (tpr - fpr).argmax()
+    ks_statistic = (tpr - fpr)[ks_index]
+    ks_threshold = thresholds[ks_index]
+    print(f"\nKS statistic: {ks_statistic:.4f} at threshold {ks_threshold:.4f}")
+
+    # Threshold choice for the confusion matrix: the KS-maximizing
+    # threshold, not 0.5. The model was trained with
+    # class_weight="balanced", which reweights the loss function but
+    # doesn't recalibrate predicted probabilities around 0.5, so 0.5 has
+    # no particular meaning here. The KS-maximizing threshold is the
+    # standard alternative in credit scoring specifically because it's
+    # the point of maximum separation between the two score
+    # distributions - a criterion grounded in the ROC curve itself,
+    # not an arbitrary round number.
+    y_pred = (test_proba >= ks_threshold).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    print(f"\nConfusion matrix at threshold {ks_threshold:.4f} (KS-maximizing):")
+    print(f"  True Negatives:  {tn}")
+    print(f"  False Positives: {fp}")
+    print(f"  False Negatives: {fn}")
+    print(f"  True Positives:  {tp}")
 
     # Sanity check: mean predicted PD should rise (within tolerance) from
     # grade A to G, same logic as the default-rate checks elsewhere in
