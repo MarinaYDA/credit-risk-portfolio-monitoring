@@ -47,6 +47,27 @@ stable — WOE is designed for the much larger volumes real banks have.
 Capping extreme values plus standard logistic regression is the honest
 choice for this sample size.
 
+**Coefficient interpretation and business conclusion:** The single
+dominant driver of 12-month default risk in this model is LendingClub's
+own credit grade — risk rises sharply and statistically significantly
+from grade C through G, while none of the raw financial attributes we
+collected (income, debt-to-income ratio, FICO score, loan amount, or
+employment length) add statistically significant independent risk
+information once grade is accounted for at this sample size; the one
+secondary significant effect is that home-improvement loans carry
+meaningfully lower risk than other loan purposes, holding grade
+constant. Critically, interest rate is not an independent risk driver
+alongside grade: on its own it is a strong, highly significant predictor
+of default, but its effect collapses to a small, statistically
+insignificant residual once grade is added to the model. This is
+expected, not a modeling flaw — LendingClub sets interest rate largely
+as a direct function of the grade it assigns, so the two variables
+capture overlapping information rather than two independent risk
+signals. For portfolio monitoring purposes, this means grade should be
+treated as the primary, decision-driving risk lever, while interest rate
+is better understood as a pricing consequence of that same underlying
+assessment than as an additional early-warning signal.
+
 ## Success Metrics (3)
 1. **Default/delinquency rate trend** — monthly (simulated) 30/60/90+ DPD
    rate, segmented by grade and purpose.
