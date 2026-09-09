@@ -39,6 +39,37 @@ rate is monotonically non-decreasing with age. See
 delinquency states (e.g. 30 DPD to 60 DPD), normalized within each
 starting state. See [sql/02_roll_rate.sql](sql/02_roll_rate.sql).
 
+## Model
+
+**Logistic regression PD model:** Trained on the 12-month default target
+using loan-level attributes as features (see
+[scripts/pd_model.py](scripts/pd_model.py)). On a held-out 25% test set,
+the model achieves **ROC-AUC 0.7120** and a **KS statistic of 0.3984**,
+at threshold 0.6018 — the KS-maximizing point, chosen because the model
+is trained with `class_weight="balanced"`, which makes 0.5 not a
+meaningful default threshold here. Confusion matrix at that threshold:
+TN 645, FP 189, FN 15, TP 25. ROC curve:
+[docs/img/roc_curve.png](docs/img/roc_curve.png).
+
+**Coefficient interpretation:** Credit grade is the dominant,
+statistically significant driver of predicted default risk; none of the
+raw financial attributes (income, DTI, FICO range, loan amount,
+employment length) add significant independent signal once grade is
+accounted for, and interest rate specifically is not an independent risk
+driver alongside grade — its effect collapses once grade is included,
+consistent with LendingClub setting interest rate largely as a function
+of grade. Full coefficient table and business-conclusion paragraph: see
+[docs/charter.md](docs/charter.md).
+
+**Per-loan scores:**
+[data/processed/loan_level_scored.csv](data/processed/loan_level_scored.csv)
+holds each loan's predicted PD — the intended input for a Power BI
+dashboard, not yet built.
+
+This is a methodology demonstration on a simulated 12-month default
+target, not a production credit model — see the disclosed limitation in
+[docs/charter.md](docs/charter.md).
+
 ## AI-Augmented Development
 
 <!-- TODO: move this section to the end of the file, after the
