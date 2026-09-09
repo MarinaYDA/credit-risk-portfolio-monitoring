@@ -37,6 +37,16 @@ signals.
    home ownership, employment length), used to validate that simulated
    delinquency behavior tracks expected risk ordering.
 
+**Note on modeling approach:** A full bank-grade PD scorecard would
+typically use coarse classing and WOE (Weight of Evidence) transformation
+of features instead of raw values with StandardScaler — this gives
+outlier robustness and per-bin explainability. We are not doing that
+here: at 3,500 loans, and an even narrower set of 12-month defaults, WOE
+bins would have too few default events per bin to be statistically
+stable — WOE is designed for the much larger volumes real banks have.
+Capping extreme values plus standard logistic regression is the honest
+choice for this sample size.
+
 ## Success Metrics (3)
 1. **Default/delinquency rate trend** — monthly (simulated) 30/60/90+ DPD
    rate, segmented by grade and purpose.
