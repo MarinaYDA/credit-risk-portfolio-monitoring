@@ -24,6 +24,8 @@ FEATURE_COLUMNS = [
     "annual_inc",
     "dti",
     "fico_range_low",
+    "loan_amnt",
+    "int_rate",
 ]
 
 

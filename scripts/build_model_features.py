@@ -36,6 +36,8 @@ FEATURE_COLUMNS = [
     "annual_inc",
     "dti",
     "fico_range_low",
+    "loan_amnt",
+    "int_rate",
 ]
 
 # TODO (before training in pd_model.py): dti and annual_inc both have a
