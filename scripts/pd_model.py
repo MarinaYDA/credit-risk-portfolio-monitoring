@@ -50,6 +50,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FEATURES_PATH = REPO_ROOT / "data" / "processed" / "model_features.csv"
 ROC_CURVE_PATH = REPO_ROOT / "docs" / "img" / "roc_curve.png"
+SCORED_PATH = REPO_ROOT / "data" / "processed" / "loan_level_scored.csv"
 
 TARGET = "defaulted_12m"
 NUM_FEATURES = [
@@ -335,6 +336,13 @@ if __name__ == "__main__":
         f"Check passed: mean predicted PD is monotonic within a "
         f"{TOLERANCE_PP:.0%} tolerance from grade A to G."
     )
+
+    # Per-loan scored output: loan_id and predicted_pd, aligned on the
+    # same index as df/X_full (both come from the same post-dropna df),
+    # so this is a direct assignment, no merge needed.
+    scored = pd.DataFrame({"loan_id": df["loan_id"], "predicted_pd": full_proba})
+    scored.to_csv(SCORED_PATH, index=False)
+    print(f"\nSaved {len(scored):,} rows to {SCORED_PATH}")
 
     # --- Coefficient interpretation: parallel statsmodels Logit ---
     # sklearn's LogisticRegression above is L2-regularized (needed for
