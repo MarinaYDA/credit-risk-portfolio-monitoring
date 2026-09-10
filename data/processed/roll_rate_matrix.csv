@@ -1,0 +1,13 @@
+from_state,to_state,n_accounts,roll_rate_pct
+dpd30,current,1743,41.48
+dpd30,dpd30,1220,29.03
+dpd30,dpd60,1201,28.58
+dpd30,,38,0.9
+dpd60,dpd30,467,19.89
+dpd60,dpd60,939,39.99
+dpd60,dpd90,917,39.05
+dpd60,,25,1.06
+dpd90,default,692,48.63
+dpd90,dpd60,208,14.62
+dpd90,dpd90,506,35.56
+dpd90,,17,1.19

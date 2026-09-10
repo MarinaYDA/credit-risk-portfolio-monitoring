@@ -8,6 +8,8 @@ data/processed/*
 !data/processed/loan_level_target.csv
 !data/processed/model_features.csv
 !data/processed/loan_level_scored.csv
+!data/processed/vintage_curve.csv
+!data/processed/roll_rate_matrix.csv
 
 __pycache__/
 *.pyc
