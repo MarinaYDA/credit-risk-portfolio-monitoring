@@ -47,26 +47,35 @@ stable — WOE is designed for the much larger volumes real banks have.
 Capping extreme values plus standard logistic regression is the honest
 choice for this sample size.
 
-**Coefficient interpretation and business conclusion:** The single
-dominant driver of 12-month default risk in this model is LendingClub's
-own credit grade — risk rises sharply and statistically significantly
-from grade C through G, while none of the raw financial attributes we
-collected (income, debt-to-income ratio, FICO score, loan amount, or
-employment length) add statistically significant independent risk
-information once grade is accounted for at this sample size; the one
-secondary significant effect is that home-improvement loans carry
-meaningfully lower risk than other loan purposes, holding grade
-constant. Critically, interest rate is not an independent risk driver
-alongside grade: on its own it is a strong, highly significant predictor
-of default, but its effect collapses to a small, statistically
-insignificant residual once grade is added to the model. This is
-expected, not a modeling flaw — LendingClub sets interest rate largely
-as a direct function of the grade it assigns, so the two variables
-capture overlapping information rather than two independent risk
-signals. For portfolio monitoring purposes, this means grade should be
-treated as the primary, decision-driving risk lever, while interest rate
-is better understood as a pricing consequence of that same underlying
-assessment than as an additional early-warning signal.
+**Coefficient interpretation and business conclusion:** In this model,
+credit grade is the dominant predictor of the 12-month default target:
+risk rises sharply and statistically significantly from grade C through
+G, and none of the other attributes collected (income, debt-to-income
+ratio, FICO score, loan amount, employment length) add statistically
+significant independent information once grade is included. Interest
+rate behaves the same way: on its own it is a strong, highly significant
+predictor, but its effect collapses to a small, statistically
+insignificant residual once grade is added.
+
+**Caveat — this reflects the simulation design, not real borrower
+behavior.** The target comes from the simulated delinquency panel, in
+which the only loan attributes that matter are grade (the monthly hazard
+of moving from current to 30 days past due) and term (the horizon); all
+other transition probabilities are the same for every loan. Grade is
+therefore expected to dominate, and the other attributes can enter the
+model only through their correlation with grade. The interest-rate
+result is the same effect: interest rate is correlated 0.96 with grade in
+the real LendingClub data, so it carries no signal beyond grade in an
+outcome that depends on grade alone. The one significant purpose
+coefficient (home improvement, p = 0.042) is not a causal finding
+either: purpose plays no role in the simulation, so a significant result
+for it can come only from correlation with grade or from chance, and
+about one significant result is expected by chance among the roughly 20
+coefficients tested at the 5% level. What this exercise demonstrates is
+the modeling workflow — a coefficient table with significance tests and a
+redundancy check between correlated variables — not a statement about
+what drives defaults in LendingClub's actual portfolio. Conclusions about
+real portfolio risk would require real monthly performance data.
 
 ## Success Metrics (3)
 1. **Default/delinquency rate trend** — monthly (simulated) 30/60/90+ DPD

@@ -39,6 +39,54 @@ rate is monotonically non-decreasing with age. See
 delinquency states (e.g. 30 DPD to 60 DPD), normalized within each
 starting state. See [sql/02_roll_rate.sql](sql/02_roll_rate.sql).
 
+## Real vs simulated data
+
+**Real:** loan-level attributes from LendingClub's public dataset —
+grade, term, interest rate, loan amount, purpose, home ownership, annual
+income, DTI, FICO range, employment length, issue date — for a
+grade-balanced sample of 3,500 loans drawn from about 2.26M.
+
+**Simulated:** everything about how loans perform after issue. The raw
+data has no monthly delinquency history, so
+[scripts/generate_loan_performance.py](scripts/generate_loan_performance.py)
+simulates each loan's monthly state (current, 30/60/90 days past due,
+default, paid off) with a Markov chain. Everything built on that panel is
+simulated too: the vintage curves, the roll rates, the 12-month default
+target (`defaulted_12m`), the model's results, and the Power BI default
+measures.
+
+**What the simulation depends on:** only the loan's grade and its term.
+Grade sets the monthly probability of moving from current to 30 days past
+due (0.6% for grade A, rising to 6.5% for G — illustrative values, not
+fitted to data); the term sets how many months the loan can run. Every
+other transition probability (early payoff, and the roll-forward and cure
+rates between delinquency stages) is the same for every loan. Issue date
+only places a loan on the calendar. FICO range, DTI, income, purpose,
+home ownership, employment length, loan amount and interest rate do not
+enter the simulation.
+
+**What follows from that:**
+- The rise in defaults from grade A (5.0% of loans reach default over
+  their term) to grade G (41.4%) is built into the simulation, not
+  observed.
+- In the PD model, grade dominates and the other attributes add nothing
+  significant because the target depends on grade only; they can show up
+  only through their correlation with grade. Interest rate is correlated
+  0.96 with grade in the real data, which is why it adds nothing
+  alongside it. The model's AUC mostly reflects how well grade, and
+  attributes correlated with it, predict a simulated outcome; it is not
+  evidence about real borrower behavior.
+- **The Risk score is uncalibrated.** The model is trained with balanced
+  class weights, and its mean score across the 3,496 scored loans is
+  0.4252, against an observed 12-month default rate of 4.63%. It ranks
+  risk; it is not a probability of default. Calibration is a next step.
+- **Year-over-year comparisons are not a real trend.** The Power BI
+  year-over-year measures compare defaults in one calendar year with the
+  previous year, using a fixed sample of 3,500 loans that ages through
+  time (loans originated 2007–2018 are observed until they mature, pay
+  off or default) and a simulated outcome. The decline in defaults after
+  2017 reflects the sample aging, not falling risk.
+
 ## Model
 
 **Logistic regression PD model:** Trained on the 12-month default target
@@ -51,24 +99,34 @@ meaningful default threshold here. Confusion matrix at that threshold:
 TN 645, FP 189, FN 15, TP 25. ROC curve:
 [docs/img/roc_curve.png](docs/img/roc_curve.png).
 
-**Coefficient interpretation:** Credit grade is the dominant,
-statistically significant driver of predicted default risk; none of the
-raw financial attributes (income, DTI, FICO range, loan amount,
-employment length) add significant independent signal once grade is
-accounted for, and interest rate specifically is not an independent risk
-driver alongside grade — its effect collapses once grade is included,
-consistent with LendingClub setting interest rate largely as a function
-of grade. Full coefficient table and business-conclusion paragraph: see
-[docs/charter.md](docs/charter.md).
+**Coefficient interpretation:** In this model, credit grade is the
+dominant, statistically significant predictor; none of the other
+attributes (income, DTI, FICO range, loan amount, employment length) add
+significant independent signal once grade is included, and interest rate
+adds nothing alongside grade. **This reflects the simulation design, not
+real borrower behavior:** the simulated delinquency depends only on grade
+(plus term as the horizon), so grade is expected to dominate, and the
+other attributes can enter only through their correlation with grade —
+interest rate is correlated 0.96 with grade in the real data. See
+[Real vs simulated data](#real-vs-simulated-data) and the full
+coefficient discussion in [docs/charter.md](docs/charter.md).
 
 **Per-loan scores:**
 [data/processed/loan_level_scored.csv](data/processed/loan_level_scored.csv)
-holds each loan's predicted PD — the intended input for a Power BI
-dashboard, not yet built.
+holds each loan's model score (3,496 loans; the 4 loans with missing DTI
+are not scored).
+
+**Power BI status:** the data model (loans, monthly performance, a date
+table, and the vintage-curve and roll-rate extracts) and nine measures
+plus one helper column are built in a local Power BI file and checked
+against DuckDB reference values. Not built yet: the report pages
+(Headline, Vintage and roll rate) and screenshots; the `.pbix` is not yet
+committed to this repository.
 
 This is a methodology demonstration on a simulated 12-month default
-target, not a production credit model — see the disclosed limitation in
-[docs/charter.md](docs/charter.md).
+target, not a production credit model — see
+[Real vs simulated data](#real-vs-simulated-data) and the disclosed
+limitation in [docs/charter.md](docs/charter.md).
 
 ## AI-Augmented Development
 
