@@ -76,10 +76,9 @@ if __name__ == "__main__":
     print("=== missing values across all feature columns ===")
     print(features[["loan_id", "defaulted_12m"] + FEATURE_COLUMNS].isna().sum())
 
-    # dti is null in exactly 4 rows, all with annual_inc == 0 - a
-    # division-by-zero in the upstream DTI calculation, not a reporting
-    # gap. Confirmed: loan_ids 111051579, 119336653, 127024211, 130789653
-    # all have annual_inc == 0, and no other row has annual_inc == 0.
+    # dti is null in exactly 4 loans, and they are exactly the 4 loans
+    # with annual_inc == 0 (loan_ids 111051579, 119336653, 127024211,
+    # 130789653); no other loan has annual_inc == 0.
     print("\n=== dti missing rows (expected: 4, all annual_inc == 0) ===")
     print(
         features.loc[features["dti"].isna(), ["loan_id", "annual_inc", "dti"]]

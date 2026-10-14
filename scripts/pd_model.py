@@ -7,18 +7,16 @@ Reads data/processed/model_features.csv.
 Data-quality decisions made here (see docs/charter.md's "Note on
 modeling approach" for the tradeoff between this and a bank-grade WOE
 scorecard):
-- The 4 rows with missing dti (annual_inc == 0, a division-by-zero in
-  the upstream calculation) are dropped as incomplete records.
+- The 4 loans with missing dti (exactly the 4 loans with annual_inc ==
+  0) are dropped before the train/test split, leaving 3,496 loans.
 - dti and annual_inc are capped at their 99th percentile, computed from
   the training set only and applied to both splits, to reduce the
   leverage of a few extreme-but-real values without leaking test-set
   information into preprocessing.
-- emp_length_years is missing for about 6% of loans ("not reported" in
-  the source data, not an incomplete record) and is median-imputed
-  inside the pipeline rather than dropped. Documented limitation: this
-  assigns the median tenure to loans where employment length was simply
-  never reported, which may understate risk for that subset if
-  non-reporting correlates with shorter tenure.
+- emp_length_years is missing for about 6% of loans. These loans are
+  kept: the missing values are replaced with the training-set median
+  inside the pipeline (SimpleImputer, median), so every such loan gets
+  the same employment-length value.
 
 Full-sample grade ordering is monotonic within a 1pp tolerance; grades F
 and G (adjacent, and the pair with the smallest gap in mean int_rate of
@@ -191,12 +189,12 @@ def redundancy_verdict(
 if __name__ == "__main__":
     df = pd.read_csv(FEATURES_PATH)
 
-    # dti is missing only where annual_inc == 0 (division-by-zero
-    # upstream) - these 4 rows are incomplete records, not worth
-    # imputing a ratio with a zero denominator.
+    # Four loans have missing dti, and they are exactly the four with
+    # annual_inc == 0. They are dropped here, before the train/test
+    # split, which leaves 3,496 loans.
     before = len(df)
     df = df.dropna(subset=["dti"])
-    print(f"Dropped {before - len(df)} rows with missing dti (incomplete records).")
+    print(f"Dropped {before - len(df)} rows with missing dti.")
 
     X = df[NUM_FEATURES + CAT_FEATURES]
     y = df[TARGET]
