@@ -116,12 +116,26 @@ coefficient discussion in [docs/charter.md](docs/charter.md).
 holds each loan's model score (3,496 loans; the 4 loans with missing DTI
 are not scored).
 
-**Power BI status:** the data model (loans, monthly performance, a date
-table, and the vintage-curve and roll-rate extracts) and nine measures
-plus one helper column are built in a local Power BI file and checked
-against DuckDB reference values. Not built yet: the report pages
-(Headline, Vintage and roll rate) and screenshots; the `.pbix` is not yet
-committed to this repository.
+**Power BI status:** the dashboard file is
+[powerbi/credit_risk_dashboard.pbix](powerbi/credit_risk_dashboard.pbix)
+(open it with Power BI Desktop). It contains the data model (loans,
+monthly performance, a date table, and the vintage-curve and roll-rate
+extracts), nine measures and two calculated columns, and the Headline
+page: summary cards, default rate and uncalibrated risk score by grade,
+and grade and vintage-year slicers. The model and the Headline page were
+checked against DuckDB reference values. Still to come: the Vintage and
+roll rate page, screenshots, and a Results section in this README.
+
+The data is imported into the file, so it opens and works without any
+setup. To refresh the data from your clone, set the `DataFolder`
+parameter to your clone's `data/processed/` folder, then refresh: in
+Power BI Desktop choose Home → Transform data → Edit parameters, enter
+the full path ending in a backslash (for example
+`C:\Users\you\credit-risk-portfolio-monitoring\data\processed\`), click
+OK and then Apply changes. The file ships with the placeholder
+`C:\path\to\credit-risk-portfolio-monitoring\data\processed\`, so a
+refresh fails until you change it. All five CSV queries read from
+`DataFolder`; none contains a machine-specific path.
 
 This is a methodology demonstration on a simulated 12-month default
 target, not a production credit model — see
